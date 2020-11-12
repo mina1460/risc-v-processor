@@ -1,6 +1,10 @@
 `include "defines.v"
 
-module branch_controls (input [6:0] opcode, input [2:0] funct3, input cf, zf, vf, sf, output reg [1:0] pc_selection);
+module branch_controls (
+    input [6:0] opcode, 
+    input [2:0] funct3, 
+    input cf, zf, vf, sf, ef,
+    output reg [1:0] pc_selection);
 
 always@(*) begin
     case(opcode)
@@ -26,6 +30,9 @@ always@(*) begin
                     default: pc_selection = 2'b00;
                 endcase
             end
+
+        `OPCODE_SYSTEM:     //ECALL & EBREAK
+            pc_selection = (ef) ? 2'b11 : 2'b00;
 
         default: pc_selection = 2'b00;
     

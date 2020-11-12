@@ -2,7 +2,7 @@
 `include "defines.v"
 
  /* Control =          
-     ImmSel     1bit    (signed or unsigned)
+     Halt       1bit    (signed or unsigned)
      MemRead    1bit    (read from memory)
      MemWrite   1bit    (write to memory)
      ToReg      2bits   (write to register)
@@ -47,6 +47,12 @@ module cu(input [31:0] instruction, output reg [9:0] controls);
 
             `OPCODE_Arith_I:       //I type
                 controls = 10'b0_0_0_01_10_0_1_1;
+                   
+            `OPCODE_FENCE:      //FENCE
+                controls = 10'b0_0_0_00_00_0_0_0;
+
+            `OPCODE_SYSTEM:     //ECALL & EBREAK
+                controls = (instruction[20]) ? 10'b0_0_0_00_00_0_0_0  : 10'b1_0_0_00_00_0_0_0;
             
             default: 
                 controls = 10'd0_0_0_00_00_0_0_0;

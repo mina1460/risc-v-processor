@@ -15,8 +15,8 @@ module processor_main(
     ✔︎    3- load data differently from different locations 
     ✔︎    4- make a slower clock using 1 bit counter for the outer clock. inner clock should have the same speed
     ✔︎    5- pipeline 
-        6- add forwarding between EX and ID stage
-        7- support FENCE, ECALL, EBREAK 
+    ✔︎    6- add forwarding between EX and ID stage [Forwardings & Branch Hazards]
+    ✔︎    7- support FENCE (NOP), ECALL (HALT), EBREAK (NOP)
 */
 
 
@@ -37,7 +37,8 @@ module processor_main(
     wire [95:0] input_if_id;
     wire [31:0] output_if_id_inst, output_if_id_pc, output_if_id_pc_add4;
     wire [31:0] immgenOut;
-    wire [9:0] controls;
+    wire controls_zero_sel; 
+    wire [9:0] controls, new_controls;
     wire [31:0] read_data_1, read_data_2;
 
 
@@ -48,23 +49,24 @@ module processor_main(
     wire [3:0] output_id_ex_aluControl;
     wire [4:0] output_id_ex_destReg;
     wire [6:0] output_id_ex_opCode;
-    wire [9:0] zero_future=0;
+    wire [4:0] output_id_ex_rs1, output_id_ex_rs2;
     wire [3:0] alu_selection;
-    wire [31:0] ALU2ndInput;
+    wire [31:0] ALU1stInput, ALUPre2ndInput, ALU2ndInput;
     wire [31:0] ALUresult;
     wire cf, zf, vf, sf;
     wire [4:0] shamt;
 
 
     /*******    EX/MEM   ********/
-    wire [151:0] input_ex_mem;
-    wire [4:0] output_ex_mem_controls;
-    wire [31:0] output_ex_mem_pc_addbranch, output_ex_mem_pc_add4, output_ex_mem_alu_result, output_ex_mem_read_data_2;
+    wire [184:0] input_ex_mem;
+    wire [5:0] output_ex_mem_controls;
+    wire [31:0] output_ex_mem_pc, output_ex_mem_pc_addbranch, output_ex_mem_pc_add4, output_ex_mem_alu_result, output_ex_mem_read_data_2;
     wire output_ex_mem_cf, output_ex_mem_zf, output_ex_mem_vf, output_ex_mem_sf;
     wire [4:0] output_ex_mem_destReg;
     wire [6:0] output_ex_mem_opCode;
     wire [2:0] output_ex_mem_funct3;
     wire [1:0] pc_selection;
+    wire forwardA, forwardB;
 
 
     /*******    MEM/WB   ********/
@@ -89,9 +91,11 @@ module processor_main(
     /*** ID STAGE ***/
     assign input_if_id = {pc, instruction, pc_add4};
     n_bit_register #(96) IF_ID_reg(input_if_id, clk, reset, 1, {output_if_id_pc, output_if_id_inst, output_if_id_pc_add4});
-    
+            
+        hazard_control_unit hcu (pc_selection, controls_zero_sel);
+
         cu controlUnit (output_if_id_inst, controls);    
-        // wire Extra    = controls[9];
+        // wire Halt     = controls[9];
         // wire MemRead  = controls[8];
         // wire MemWrite = controls[7];
         // wire [1:0] ToReg  = controls[6:5];
@@ -99,39 +103,43 @@ module processor_main(
         // wire ALUSrc1  = controls[2];
         // wire ALUSrc2  = controls[1];
         // wire RegWrite = controls[0];
+         NBit_MUX2x1 #(10) new_controls_mux (10'b0, controls, controls_zero_sel, new_controls); 
 
         reg_file registerfile (write_data, output_if_id_inst[19:15], output_if_id_inst[24:20], output_mem_wb_destReg, output_mem_wb_controls[0], ~clk, reset, read_data_1, read_data_2);
         rv32_ImmGen immediategen (output_if_id_inst, immgenOut);
 
 
     /*** EX STAGE ***/
-    assign input_id_ex = {controls, output_if_id_pc, read_data_1, read_data_2, immgenOut, output_if_id_inst[30], output_if_id_inst[14:12], output_if_id_inst[11:7], output_if_id_inst[6:0], output_if_id_pc_add4};
+    assign input_id_ex = {output_if_id_inst[24:20], output_if_id_inst[19:15], new_controls, output_if_id_pc, read_data_1, read_data_2, immgenOut, output_if_id_inst[30], output_if_id_inst[14:12], output_if_id_inst[11:7], output_if_id_inst[6:0], output_if_id_pc_add4};
     n_bit_register #(196) ID_EX_reg (input_id_ex, clk, reset, 1, 
-    {zero_future,output_id_ex_controls, output_id_ex_pc,output_id_ex_read_data_1, output_id_ex_read_data_2, output_id_ex_immgenOut, output_id_ex_aluControl, output_id_ex_destReg, output_id_ex_opCode, output_id_ex_pc_add4});
+    {output_id_ex_rs1, output_id_ex_rs2,output_id_ex_controls, output_id_ex_pc,output_id_ex_read_data_1, output_id_ex_read_data_2, output_id_ex_immgenOut, output_id_ex_aluControl, output_id_ex_destReg, output_id_ex_opCode, output_id_ex_pc_add4});
     
         wire [31:0] fake_inst_alu = {1'b0, output_id_ex_aluControl[3], 15'b0, output_id_ex_aluControl[2:0], 12'b0}; 
         alu_cu ALUCntrl (fake_inst_alu, output_id_ex_controls[4:3], alu_selection);
                                                                                                                                                                                  
-        NBit_MUX2x1 alu2input (output_id_ex_immgenOut, output_id_ex_read_data_2, output_id_ex_controls[1], ALU2ndInput); 
+        NBit_MUX2x1 alu2input (output_id_ex_immgenOut, output_id_ex_read_data_2, output_id_ex_controls[1], ALUPre2ndInput); 
+
+        forwarding_unit fu (output_id_ex_rs1, output_id_ex_rs2, output_mem_wb_destReg, output_mem_wb_controls[0], forwardA, forwardB);
+        NBit_MUX2x1 fowardMUXA (write_data, output_id_ex_read_data_1, forwardA, ALU1stInput); 
+        NBit_MUX2x1 fowardMUXB (write_data, ALUPre2ndInput, forwardB, ALU2ndInput);
 
         assign shamt = output_id_ex_read_data_2;
-        prv32_ALU ALU (output_id_ex_read_data_1, ALU2ndInput, shamt, ALUresult, cf, zf, vf, sf, alu_selection); 
+        prv32_ALU ALU (ALU1stInput, ALU2ndInput, shamt, ALUresult, cf, zf, vf, sf, alu_selection); 
 
-        adder PC_addImm (output_id_ex_pc, immgenOut, 0, pc_adder_branch, pc_cout);
+        adder PC_addImm (output_id_ex_pc, output_id_ex_immgenOut, 0, pc_adder_branch, pc_cout);
 
-    /*
-        FORWARDING HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    */  
+   
     
     /*** MEM STAGE ***/
-    assign input_ex_mem = {output_id_ex_controls[8:5], output_id_ex_controls[0],pc_adder_branch,ALUresult,cf,zf,vf,sf,output_id_ex_read_data_2, output_id_ex_aluControl[2:0], output_id_ex_destReg, output_id_ex_opCode, output_id_ex_pc_add4};
-    n_bit_register #(152) EX_MEM_reg (input_ex_mem, clk, reset, 1,
-     {output_ex_mem_controls, output_ex_mem_pc_addbranch, output_ex_mem_alu_result, output_ex_mem_cf, output_ex_mem_zf, output_ex_mem_vf, output_ex_mem_sf, output_ex_mem_read_data_2, output_ex_mem_funct3, output_ex_mem_destReg, output_ex_mem_opCode, output_ex_mem_pc_add4});
-        //output_ex_mem_controls -> MemRead 4 , MemWrite 3 , ToReg 2 1, RegWrite 0
+    assign input_ex_mem = {output_id_ex_controls[9:5], output_id_ex_controls[0],pc_adder_branch,ALUresult,cf,zf,vf,sf,output_id_ex_read_data_2, output_id_ex_aluControl[2:0], output_id_ex_destReg, output_id_ex_opCode, output_id_ex_pc_add4, output_id_ex_pc};
+    n_bit_register #(185) EX_MEM_reg (input_ex_mem, clk, reset, 1,
+     {output_ex_mem_controls, output_ex_mem_pc_addbranch, output_ex_mem_alu_result, output_ex_mem_cf, output_ex_mem_zf, output_ex_mem_vf, output_ex_mem_sf, output_ex_mem_read_data_2, output_ex_mem_funct3, output_ex_mem_destReg, output_ex_mem_opCode, output_ex_mem_pc_add4, output_ex_mem_pc});
+        //output_ex_mem_controls -> Halt 5, MemRead 4 , MemWrite 3 , ToReg 2 1, RegWrite 0
         
-        branch_controls brcontrols (output_ex_mem_opCode, output_ex_mem_funct3, output_ex_mem_cf, output_ex_mem_zf, output_ex_mem_vf, output_ex_mem_sf, pc_selection);
+        wire output_ex_mem_ef = output_ex_mem_controls[5];
+        branch_controls brcontrols (output_ex_mem_opCode, output_ex_mem_funct3, output_ex_mem_cf, output_ex_mem_zf, output_ex_mem_vf, output_ex_mem_sf, output_ex_mem_ef, pc_selection);
         
-        mux_4x1 pcmux (pc_add4, output_ex_mem_alu_result, output_ex_mem_pc_addbranch, pc, pc_selection, pc_next);
+        mux_4x1 pcmux (pc_add4, output_ex_mem_alu_result, output_ex_mem_pc_addbranch, output_ex_mem_pc, pc_selection, pc_next);
 
 
     /*** WB STAGE***/        

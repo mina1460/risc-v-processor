@@ -15,7 +15,8 @@
 `define     OPCODE_Arith_R  7'b01_100_11
 `define     OPCODE_AUIPC    7'b00_101_11
 `define     OPCODE_LUI      7'b01_101_11
-`define     OPCODE_SYSTEM   7'b11_100_11 
+`define     OPCODE_SYSTEM   7'b11_100_11
+`define     OPCODE_FENCE    7'b00_011_11 
 `define     OPCODE_Custom   7'b10_001_11
 
 `define     F3_ADD          3'b000
