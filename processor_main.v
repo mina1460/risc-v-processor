@@ -85,7 +85,7 @@ module processor_main(
 
 
     /*** IF STAGE ***/
-        n_bit_register PC (pc_next, clk,reset, clk_slow, pc);
+        n_bit_register PC (pc_next, clk_slow, reset, load, pc);
         adder PC_add4 (pc, 4, 0, pc_add4, pc_cout);
         
         assign memory_address = clk_slow ? pc[8:0] : output_ex_mem_alu_result [8:0];
