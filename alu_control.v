@@ -26,7 +26,7 @@ module alu_cu( input [31:0] instr, input [1:0] aluOP, output reg [3:0] alu_selec
               11'b0_111_0010011, 11'b1_111_0010011 : alu_selection = `ALU_AND;   //and   (ANDI)
               11'b0_001_0010011 : alu_selection = `ALU_SLL;   //sll   (SLLI)
               11'b0_101_0010011 : alu_selection = `ALU_SRL;   //srl   (SRLI)
-              11'b1_010_0010011 : alu_selection = `ALU_SRA;   //sra   (SRAI)
+              11'b1_101_0010011 : alu_selection = `ALU_SRA;   //sra   (SRAI)
               
               11'b0_000_0110011 : alu_selection = `ALU_ADD;   //add   (ADD)
               11'b1_000_0110011 : alu_selection = `ALU_SUB;   //sub   (SUB)
@@ -35,7 +35,7 @@ module alu_cu( input [31:0] instr, input [1:0] aluOP, output reg [3:0] alu_selec
               11'b0_011_0110011 : alu_selection = `ALU_SLTU;  //sltu  (SLTU)
               11'b0_100_0110011 : alu_selection = `ALU_XOR ;  //xor   (XOR)
               11'b0_101_0110011 : alu_selection = `ALU_SRL;   //srl   (SRL)
-              11'b1_000_0110011 : alu_selection = `ALU_SRA;   //sra   (SRA)
+              11'b1_101_0110011 : alu_selection = `ALU_SRA;   //sra   (SRA)
               11'b0_110_0110011 : alu_selection = `ALU_OR;    //or    (OR)
               11'b0_111_0110011 : alu_selection = `ALU_AND;   //and   (AND)
               

@@ -1,4 +1,4 @@
-module shifter (input [31:0] a, input [4:0] shamt, input [1:0] type, output reg [31:0] r);
+module shifter (input signed [31:0] a, input [4:0] shamt, input [1:0] type, output reg signed [31:0] r);
 //shifter shifter0(.a(a), .shamt(shamt), .type(alufn[1:0]),  .r(sh));
 
         always@(*) begin

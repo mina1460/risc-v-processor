@@ -39,9 +39,21 @@ module Memory (
     assign msbh = mem[addr+1][7];       //most significant bit of half-word (2 bytes)
 
     initial begin
-     mem[0]=32'd5;
-     mem[2]=32'd2;
-     mem[3]=32'd1;
+             {mem[3], mem[2], mem[1], mem[0]} = 32'h00000033;
+               {mem[7], mem[6], mem[5], mem[4]} = 32'h01900093; 
+         {mem[11], mem[10], mem[9], mem[8]} = 32'h06600113; 
+         {mem[15], mem[14], mem[13], mem[12]} = 32'h0020e133; 
+         {mem[19], mem[18], mem[17], mem[16]} = 32'h00c00193; 
+         {mem[23], mem[22], mem[21], mem[20]} = 32'h00100213; 
+         {mem[27], mem[26], mem[25], mem[24]} = 32'h004191b3; 
+         {mem[31], mem[30], mem[29], mem[28]} = 32'h0040d0b3; 
+         {mem[35], mem[34], mem[33], mem[32]} = 32'hffd00293; 
+         {mem[39], mem[38], mem[37], mem[36]} = 32'h4042d2b3; 
+         {mem[43], mem[42], mem[41], mem[40]} = 32'h00224233; 
+         {mem[47], mem[46], mem[45], mem[44]} = 32'h0030f1b3; 
+         {mem[51], mem[50], mem[49], mem[48]} = 32'h001280b3;
+         {mem[55], mem[54], mem[53], mem[52]} = 32'h40510133;
+         {mem[59], mem[58], mem[57], mem[56]} = 32'h00000073;
     end 
     
     ///////Fetching Instructions////////// 
@@ -50,7 +62,7 @@ module Memory (
     begin
         if(clk_slow)
             inst_out = {mem[addr+3], mem[addr+2], mem[addr+1], mem[addr]};
-        else inst_out = 32'h51; //NOP   CHECK!!!!!
+        else inst_out = 32'h33; //NOP   CHECK!!!!!
     end
 
     /////////loading//////////

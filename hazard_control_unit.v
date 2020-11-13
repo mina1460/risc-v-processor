@@ -1,6 +1,6 @@
 module hazard_control_unit (
         input [1:0] pc_selection,  
-        output controls_zero); 
+        output reg controls_zero); 
 //
 always@(*)
 begin 

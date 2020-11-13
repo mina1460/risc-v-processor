@@ -21,9 +21,12 @@ module processor_main(
 
 
     reg clk_slow;
-    always @(posedge clk) begin
+    always @(posedge clk or posedge reset) begin
+        if (reset) clk_slow = 0;
+        else 
         clk_slow = clk_slow + 1;
     end
+
 
 
     /*******    IF   ********/
@@ -31,6 +34,7 @@ module processor_main(
     wire pc_cout;
     wire [31:0] instruction;
     wire [8:0] memory_address;  
+    wire [31:0] data_out;
 
 
     /*******    IF/ID   ********/
@@ -81,7 +85,7 @@ module processor_main(
 
 
     /*** IF STAGE ***/
-        n_bit_register PC (pc_next, clk,reset, load, pc);
+        n_bit_register PC (pc_next, clk,reset, clk_slow, pc);
         adder PC_add4 (pc, 4, 0, pc_add4, pc_cout);
         
         assign memory_address = clk_slow ? pc[8:0] : output_ex_mem_alu_result [8:0];
@@ -112,18 +116,20 @@ module processor_main(
     /*** EX STAGE ***/
     assign input_id_ex = {output_if_id_inst[24:20], output_if_id_inst[19:15], new_controls, output_if_id_pc, read_data_1, read_data_2, immgenOut, output_if_id_inst[30], output_if_id_inst[14:12], output_if_id_inst[11:7], output_if_id_inst[6:0], output_if_id_pc_add4};
     n_bit_register #(196) ID_EX_reg (input_id_ex, clk, reset, 1, 
-    {output_id_ex_rs1, output_id_ex_rs2,output_id_ex_controls, output_id_ex_pc,output_id_ex_read_data_1, output_id_ex_read_data_2, output_id_ex_immgenOut, output_id_ex_aluControl, output_id_ex_destReg, output_id_ex_opCode, output_id_ex_pc_add4});
+    {output_id_ex_rs2, output_id_ex_rs1,output_id_ex_controls, output_id_ex_pc,output_id_ex_read_data_1, output_id_ex_read_data_2, output_id_ex_immgenOut, output_id_ex_aluControl, output_id_ex_destReg, output_id_ex_opCode, output_id_ex_pc_add4});
     
-        wire [31:0] fake_inst_alu = {1'b0, output_id_ex_aluControl[3], 15'b0, output_id_ex_aluControl[2:0], 12'b0}; 
+        wire [31:0] fake_inst_alu = {1'b0, output_id_ex_aluControl[3], 15'b0, output_id_ex_aluControl[2:0], 5'b0, output_id_ex_opCode}; 
         alu_cu ALUCntrl (fake_inst_alu, output_id_ex_controls[4:3], alu_selection);
                                                                                                                                                                                  
-        NBit_MUX2x1 alu2input (output_id_ex_immgenOut, output_id_ex_read_data_2, output_id_ex_controls[1], ALUPre2ndInput); 
 
         forwarding_unit fu (output_id_ex_rs1, output_id_ex_rs2, output_mem_wb_destReg, output_mem_wb_controls[0], forwardA, forwardB);
         NBit_MUX2x1 fowardMUXA (write_data, output_id_ex_read_data_1, forwardA, ALU1stInput); 
-        NBit_MUX2x1 fowardMUXB (write_data, ALUPre2ndInput, forwardB, ALU2ndInput);
+        NBit_MUX2x1 fowardMUXB (write_data, output_id_ex_read_data_2, forwardB, ALUPre2ndInput);
+        
+        NBit_MUX2x1 alu2input (output_id_ex_immgenOut, ALUPre2ndInput, output_id_ex_controls[1], ALU2ndInput);
+ 
 
-        assign shamt = output_id_ex_read_data_2;
+        assign shamt = (output_id_ex_opCode[5]==1) ? ALU2ndInput : output_id_ex_rs2;
         prv32_ALU ALU (ALU1stInput, ALU2ndInput, shamt, ALUresult, cf, zf, vf, sf, alu_selection); 
 
         adder PC_addImm (output_id_ex_pc, output_id_ex_immgenOut, 0, pc_adder_branch, pc_cout);
@@ -154,7 +160,7 @@ module processor_main(
         
         case (ledSel)
             2'b00: leds = {controls[8:3], controls[1:0]};
-            2'b01: leds = {ALUOP, cf, zf, vf, sf, pc_selection};
+            2'b01: leds = {controls[4:3], cf, zf, vf, sf, pc_selection};
             2'b10: leds = alu_selection;
             2'b11: leds = ALUresult[7:0];      
         endcase
