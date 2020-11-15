@@ -1,3 +1,5 @@
+`include "defines.v"
+
 module prv32_ALU(
 	input   wire [31:0] a, b,
 	input   wire [4:0]  shamt,
@@ -25,20 +27,20 @@ module prv32_ALU(
         (* parallel_case *)
         case (alufn)
             // arithmetic
-            4'b00_00 : r = add;     //add
-            4'b00_01 : r = add;     //subtract
-            4'b00_11 : r = b;       //propagate
+            `ALU_ADD : r = add;     //add
+            `ALU_SUB : r = add;     //subtract
+            `ALU_PASS : r = b;       //propagate
             // logic
-            4'b01_00:  r = a | b;   //or
-            4'b01_01:  r = a & b;   //and
-            4'b01_11:  r = a ^ b;   //xor
+            `ALU_OR:  r = a | b;   //or
+            `ALU_AND:  r = a & b;   //and
+            `ALU_XOR:  r = a ^ b;   //xor
             // shift
-            4'b10_00:  r=sh;        //sll        
-            4'b10_01:  r=sh;        //srl
-            4'b10_10:  r=sh;        //sra
+            `ALU_SRL:  r=sh;        //srl        
+            `ALU_SLL:  r=sh;        //sll
+            `ALU_SRA:  r=sh;        //sra
             // slt & sltu
-            4'b11_01:  r = {31'b0,(sf != vf)}; 
-            4'b11_11:  r = {31'b0,(~cf)};            	
+            `ALU_SLT:  r = {31'b0,(sf != vf)}; 
+            `ALU_SLTU:  r = {31'b0,(~cf)};            	
         endcase
     end
 endmodule

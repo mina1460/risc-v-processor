@@ -4,7 +4,7 @@ module reg_file #(parameter N=32) (
     input [N-1:0] write_data, 
     input [4:0] reg_read1, reg_read2, reg_write1, 
     input write_enable, clk, reset, 
-    output [N-1:0] read_data_1, read_data_2);
+    output  [N-1:0] read_data_1, read_data_2);
 
 wire [N-1:0] Q [0:N-1];
 reg [N-1:0] load;
