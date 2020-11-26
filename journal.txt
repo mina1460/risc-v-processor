@@ -1,0 +1,76 @@
+26/11
+   12:00 PM:
+      - Report
+   02:00 PM:
+      - Final Revision on code
+
+25/11 
+   4:00 PM: 
+      - FPGA testing
+
+24/11 
+   5:00 PM: 
+      - contiuned simulations and ensured correct execution
+
+17/11 -> 21/11 : ACM Competition
+
+16/11
+   11:00 PM :
+      - refactored code to follow coding guidelines
+
+14/11
+   8:00 PM  : 
+      - we tested memory instructions (lb, lh, lw, lbu, lhu, sw, sh, sb)
+	   - we tested JAL, JALR, AUIPC, LUI, EBREAK, ECALL, FENCE instructions
+
+13/11
+   3:00 PM  : 
+       - we tested all branch instructions
+	    - we completed testing the rest of the ALU instructions
+		
+12/11
+   11:00 PM : we tested ALU instructions (R-format and I-format)
+	     - fixed several errors such as the shifting and other logical errors
+
+
+10/11
+   7:00 PM  : 
+	    - we implemented the hazard control unit and the instruction flushing
+
+
+8/11
+   10:00 PM : 
+	    - we implemented the forwarding unit 
+
+
+28/10
+   7:00 PM  : 
+	    - we tested the processor using a custom assembly program that we wrote 
+	    - we found some bugs and fixed them accordingly 
+	    - we modified our code to follow the clean code guidlines and replaced the numbers with their equivalent from the defines file.
+	    - our processor now supports 37 instructions. 
+
+27/10 
+    9:00 PM : 
+	    - we added support for LBU, LB, LH, LHU, LW, SB, SH, SW
+       - modified the data memory to be byte addressable 
+
+26/10
+    6:00 PM: 
+            - supported all ALU instructions
+            - modified ALU controls
+            - supported all shift instructions, and wrote the shifter module 
+            - added a 4x1 mux before the PC 
+            - wrote the Branch control unit 
+            - reverted back to the implementation with the target adder branch 
+            - propagted certain instructions through the ALU by modifing the ALU controls and the Control unit
+
+25/10
+    4:00 PM: 
+            - wrote the Controls for all instructins supported 
+            - changed the given datapath to use the ALU to calculate the target adder address 
+            - decided to write a branch comparator unit to handle jumps and branching in the decoding phase before the ALU
+
+23/10
+    12:00 AM
+            - we have read the project description and understood what are we supposed to do
